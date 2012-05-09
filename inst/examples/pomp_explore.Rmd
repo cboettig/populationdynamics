@@ -1,5 +1,5 @@
-``` {r setup}
-opts_knit$set(warning = FALSE, message = FALSE, comment = NA, upload.fun=socialR::flickr.url, cache=TRUE)
+``` {r setup, echo=FALSE, cache=FALSE}
+opts_knit$set(warning = FALSE, message = FALSE, comment = NA, cache=TRUE)
 ````
 
 ``` {r sim-process}
@@ -72,18 +72,15 @@ Now we're ready for an iterated-filtering run.  This is gonna be slow,
 so let's set up a parallel architecture first:
 
 ``` {r parallel}
+require(snowfall)
 sfInit(parallel=TRUE, cpu=10)
-estpars <- c("r","sigma","tau")
-theta.true <- coef(gompertz)
-sfExportAll()
 sfLibrary(pomp)
-
-
 ````
 
 ``` {r iterated-filtering}
 rep <- function(dummy_index){
-    theta.guess <- theta.true
+		estpars <- c("r","sigma","tau")
+		theta.guess <- coef(gompertz)
     theta.guess[estpars] <- rlnorm(
       n=length(estpars),
       meanlog=log(theta.guess[estpars]),
@@ -100,7 +97,13 @@ rep <- function(dummy_index){
       cooling.factor=0.999,
       max.fail=10)
   }
-system.time(mf <- sfSapply(1:10, rep))
+sfExportAll()
+system.time(mf <- sapply(1:10, rep))
+````
+
+
+``` {r save}
+save(list=ls(), file="pomp_explore.rda")
 ````
 
 > The key idea of iterated filtering is to replace the model we are interested in fitting—which has time invariant parameters—with a model that is just the same except that its parameters take a random walk in time. As the intensity of this random walk approaches zero, the modiﬁed model approaches the original model. 
@@ -124,7 +127,7 @@ Evaluate convergence
 
  just the mean of coefs across the 10 reps -- gosh wish Aaron would learn data structures
 
-``` {r }
+``` {r par-est}
 theta.mif <- apply(sapply(mf,coef),1,mean)
 theta.mif
 ````
@@ -132,12 +135,8 @@ theta.mif
 Evaluating the log-likelihoods at the convergent parameters requires the particle filter.  This line applies the particle filter to each of the parameter estimates
 
 
-``` {r }
+``` 
 loglik.mif <- replicate(n=10,logLik(pfilter(mf[[1]],params=theta.mif,Np=10000)))
-````
-
-
-``` {r }
 bl <- mean(loglik.mif)
 loglik.mif.est <- bl+log(mean(exp(loglik.mif-bl)))
 loglik.mif.se <- sd(exp(loglik.mif-bl))/exp(loglik.mif.est-bl)
@@ -146,7 +145,7 @@ c(est = loglik.mif.est, se = loglik.mif.se)
 
 "True" uses the original model and coefficients rather than the estimated one, but still approximates the log.likelihood using particle filtering 
 
-``` {r }
+``` 
 loglik.true <- replicate(n=10,logLik(pfilter(gompertz,params=coef(gompertz),Np=10000)))
 loglik.true.est <- bl+log(mean(exp(loglik.true-bl)))
 loglik.true.se <- sd(exp(loglik.true-bl))/exp(loglik.true.est-bl)
