@@ -1,6 +1,4 @@
-``` {r setup, echo=FALSE, cache=FALSE}
-opts_knit$set(warning = FALSE, message = FALSE, comment = NA, cache=TRUE)
-````
+`ro warning = FALSE, message = FALSE, comment = NA, cache=TRUE or`
 
 ``` {r sim-process}
 require(pomp)
@@ -51,6 +49,40 @@ plot(gompertz,variables="Y")
 ````
 
 
+Likelihood using a particle filter (sequential Monte Carlo) requires the measurement density (but not the process density).  
+
+
+``` {r measurement-density}
+gompertz.meas.dens <- function (y, x, t, params, log, ...) {
+tau <- params["tau"]
+## state at time t:
+X <- x["X"]
+## observation at time t:
+  Y <- y["Y"]
+## compute the likelihood of Y|X,tau
+  dlnorm(x=Y,meanlog=log(X),sdlog=tau,log=log)
+}
+````
+
+Stick the new function into our container:
+
+``` {r }
+gompertz <- pomp(
+  gompertz,
+  dmeasure=gompertz.meas.dens
+)
+````
+
+Then we get a point estimate of the likelihood,
+
+``` {r particle-filter}
+pf <- pfilter(gompertz,params=theta,Np=1000)
+logLik(pf)
+````
+
+
+
+
 
 
 
@@ -59,7 +91,7 @@ plot(gompertz,variables="Y")
 We will do this in the transformed variable space, so we add
 our transformation method to the container:
 
-``` {r }
+``` {r transforms}
 gompertz <- pomp(
   gompertz,
   parameter.transform=function(params,...){
@@ -68,16 +100,17 @@ gompertz <- pomp(
     log(params)})
 ```
 
+
 Now we're ready for an iterated-filtering run.  This is gonna be slow,
 so let's set up a parallel architecture first:
 
-``` {r parallel}
+``` {r parallel} 
 require(snowfall)
 sfInit(parallel=TRUE, cpu=10)
 sfLibrary(pomp)
 ````
 
-``` {r iterated-filtering}
+``` {r iterated-filter} 
 rep <- function(dummy_index){
 		estpars <- c("r","sigma","tau")
 		theta.guess <- coef(gompertz)
@@ -98,7 +131,7 @@ rep <- function(dummy_index){
       max.fail=10)
   }
 sfExportAll()
-system.time(mf <- sapply(1:10, rep))
+system.time(mf <- sfSapply(1:10, rep))
 ````
 
 
@@ -135,7 +168,7 @@ theta.mif
 Evaluating the log-likelihoods at the convergent parameters requires the particle filter.  This line applies the particle filter to each of the parameter estimates
 
 
-``` 
+``` {r lik-calc} 
 loglik.mif <- replicate(n=10,logLik(pfilter(mf[[1]],params=theta.mif,Np=10000)))
 bl <- mean(loglik.mif)
 loglik.mif.est <- bl+log(mean(exp(loglik.mif-bl)))
@@ -145,7 +178,7 @@ c(est = loglik.mif.est, se = loglik.mif.se)
 
 "True" uses the original model and coefficients rather than the estimated one, but still approximates the log.likelihood using particle filtering 
 
-``` 
+``` {r true-lik} 
 loglik.true <- replicate(n=10,logLik(pfilter(gompertz,params=coef(gompertz),Np=10000)))
 loglik.true.est <- bl+log(mean(exp(loglik.true-bl)))
 loglik.true.se <- sd(exp(loglik.true-bl))/exp(loglik.true.est-bl)
@@ -154,42 +187,6 @@ c(est = loglik.true.est, se = loglik.true.se)
 
 
 
-
-
-
-
-
-
-Likelihood using a particle filter (sequential Monte Carlo) requires the measurement density (but not the process density).  
-
-
-``` {r measurement-density}
-gompertz.meas.dens <- function (y, x, t, params, log, ...) {
-tau <- params["tau"]
-## state at time t:
-X <- x["X"]
-## observation at time t:
-  Y <- y["Y"]
-## compute the likelihood of Y|X,tau
-  dlnorm(x=Y,meanlog=log(X),sdlog=tau,log=log)
-}
-````
-
-Stick the new function into our container:
-
-``` {r }
-gompertz <- pomp(
-gompertz,
-dmeasure=gompertz.meas.dens
-)
-````
-
-Then we get a point estimate of the likelihood,
-
-``` {r particle-filter}
-pf <- pfilter(gompertz,params=theta,Np=1000)
-logLik(pf)
-````
 
 
 
