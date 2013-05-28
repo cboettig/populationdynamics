@@ -6,7 +6,7 @@ Author: Carl Boettiger <cboettig@gmail.com>
 Maintainer: Carl Boettiger <cboettig@gmail.com>
 Description: Simulation tools, largely for individual based models
     using the Gillespie algorithm and fast C code.
-License: CC0
+License: BSD
 URL: https://github.com/cboettig/populationdynamics
 BugReports: https://github.com/cboettig/populationdynamics/issues
 SystemRequirements: Gnu Scientific Library version >= 1.8
