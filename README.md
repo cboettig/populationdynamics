@@ -12,6 +12,7 @@ Maintainer: Carl Boettiger <cboettig@gmail.com>
 
 Description: Simulation tools, largely for individual based models
     using the Gillespie algorithm and fast C code.
+
 License: BSD
 
 URL: https://github.com/cboettig/populationdynamics
