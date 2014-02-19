@@ -1,5 +1,4 @@
 
-
 - Package: populationdynamics
 - Title: An R package with tools to simulate various population dynamics models in ecology
 - Version: 0.0-1
@@ -45,3 +44,6 @@ including the high performance computing facility Carver operated by
 the NERSC supercomputing center in Berkeley.
 
 
+## Installation hints
+
+One Mac user found it necessary to add a symbolic link to the appropriate C compiler to successfully install this package on Maverick. See https://github.com/cboettig/prosecutors-fallacy/issues/2#issue-27830362
