@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/3437830.svg)](https://zenodo.org/badge/latestdoi/3437830)
+
+
 
 - Package: populationdynamics
 - Title: An R package with tools to simulate various population dynamics models in ecology
