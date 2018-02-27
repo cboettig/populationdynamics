@@ -1,4 +1,5 @@
 [![DOI](https://zenodo.org/badge/3437830.svg)](https://zenodo.org/badge/latestdoi/3437830)
+[![Travis-CI Build Status](https://travis-ci.org/cboettig/populationdynamics.svg?branch=master)](https://travis-ci.org/cboettig/populationdynamics)
 
 
 
